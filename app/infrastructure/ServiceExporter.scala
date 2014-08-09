@@ -4,6 +4,7 @@ import play.api.{Logger, Configuration}
 import scala.collection.JavaConverters._
 import org.apache.curator.framework.CuratorFramework
 import org.apache.curator.x.discovery.{ServiceDiscoveryBuilder, UriSpec, ServiceInstance}
+import infrastructure.config.Config
 
 /**
  *
@@ -23,8 +24,8 @@ class ServiceExporter(curatorFramework: CuratorFramework, configuration: Configu
       service =>
         Logger.debug(s"Exporting service context: ${service.context} name: ${service.name}")
         val serviceInstance = ServiceInstance.builder[Void]().uriSpec(new UriSpec(uriSpec + service.context))
-          .address("localhost")
-          .port(9000) //todo
+          .address(Config.hostname)
+          .port(Config.port)
           .name(service.name)
           .build()
 
