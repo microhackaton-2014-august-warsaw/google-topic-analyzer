@@ -1,6 +1,27 @@
+organization := "com.ofg"
+
 name := """google-topic-analyzer"""
 
-version := "1.0-SNAPSHOT"
+version := "1.0"
+
+publishMavenStyle := true
+
+credentials += Credentials("Sonatype Nexus Repository Manager", "nexus.microhackathon.pl", "deployment", "deployment123")
+
+publishTo := Some("Microhackathon repository" at "http://nexus.microhackathon.pl/content/repositories/releases/")
+
+
+val deployTask = TaskKey[Unit]("deployTask",
+  "Deletes files produced by the build, such as generated sources, compiled classes, and task caches.")
+
+deployTask := {
+  val json = """{"artifactId": "${project.name}", "groupId": "$artifactGroupId","version": "$currentVersion",
+                     "jvmParams": "-Dspring.profiles.active=prod -Dserver.port=$serverPort
+                      -Dservice.resolver.url=zookeeper.microhackathon.pl:2181"}"""
+  println(s"Sending the following json [$json]")
+  //   IO.htt
+  //new groovyx.net.http.HTTPBuilder('http://54.73.40.79:18081/deploy').post([body: json, headers: ['Content-Type': 'application/json']])
+}
 
 libraryDependencies ++= Seq(
   "com.ofg" % "micro-deps" % "0.5.0",
