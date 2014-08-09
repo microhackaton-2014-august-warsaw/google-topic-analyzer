@@ -1,3 +1,5 @@
+import scalaj.http.{Http, HttpOptions}
+
 organization := "com.ofg"
 
 name := """google-topic-analyzer"""
@@ -10,15 +12,20 @@ credentials += Credentials("Sonatype Nexus Repository Manager", "nexus.microhack
 
 publishTo := Some("Microhackathon repository" at "http://nexus.microhackathon.pl/content/repositories/releases/")
 
+val port = 8905
 
 val deployTask = TaskKey[Unit]("deployTask",
   "Deletes files produced by the build, such as generated sources, compiled classes, and task caches.")
 
 deployTask := {
-  val json = """{"artifactId": "${project.name}", "groupId": "$artifactGroupId","version": "$currentVersion",
-                     "jvmParams": "-Dspring.profiles.active=prod -Dserver.port=$serverPort
+  val json = s"""{"artifactId": "$name", "groupId": "$organization","version": "$version",
+                     "jvmParams": "-Dhttp.port=$port
                       -Dservice.resolver.url=zookeeper.microhackathon.pl:2181"}"""
   println(s"Sending the following json [$json]")
+  println(Http.postData("http://54.73.40.79:18081/deploy", json)
+    .header("Content-Type", "application/json")
+    .header("Charset", "UTF-8")
+    .responseCode)
   //   IO.htt
   //new groovyx.net.http.HTTPBuilder('http://54.73.40.79:18081/deploy').post([body: json, headers: ['Content-Type': 'application/json']])
 }
