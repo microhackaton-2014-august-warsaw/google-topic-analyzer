@@ -154,3 +154,6 @@ And it will hit collectors at /{pairId} with topics extracted from google activi
         "topics" : [ "topic1", "topic2" ]
     }
 ]
+
+
+[![Build Status](https://travis-ci.org/microhackaton/google-topic-analyzer.svg?branch=master)](https://travis-ci.org/microhackaton/google-topic-analyzer)

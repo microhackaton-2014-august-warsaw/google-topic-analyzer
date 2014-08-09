@@ -1,3 +1,4 @@
+import org.apache.curator.test.TestingServer
 import org.specs2.mutable._
 import org.specs2.runner._
 import org.junit.runner._
@@ -11,7 +12,7 @@ import play.api.test.Helpers._
  * For more information, consult the wiki.
  */
 @RunWith(classOf[JUnitRunner])
-class ApplicationSpec extends Specification {
+class ApplicationSpec extends Specification with Before{
 
   "Application" should {
 
@@ -26,5 +27,9 @@ class ApplicationSpec extends Specification {
       contentType(home) must beSome.which(_ == "text/html")
       contentAsString(home) must contain ("Hello Play Framework")
     }
+  }
+
+  def before = {
+    val testingZookeeperServer = new TestingServer(2181)
   }
 }
