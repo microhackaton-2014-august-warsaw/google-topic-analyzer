@@ -19,3 +19,19 @@ Hit *PUT* at:
 
 with list of activities:
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[![Build Status](https://travis-ci.org/microhackaton/google-topic-analyzer.svg?branch=master)](https://travis-ci.org/microhackaton/google-topic-analyzer)
