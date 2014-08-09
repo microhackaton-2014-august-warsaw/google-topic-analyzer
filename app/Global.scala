@@ -1,11 +1,13 @@
-import com.google.inject.{AbstractModule, Guice}
+import com.google.inject.{Injector, AbstractModule, Guice}
 import com.wordnik.swagger.config.ConfigFactory
 import com.wordnik.swagger.model.ApiInfo
-import delegate.{TimeServiceDelegate, ZookeeperTimeServiceDelegate}
-import infrastructure.ServiceExporter
-import org.apache.curator.framework.{CuratorFramework, CuratorFrameworkFactory}
+import delegate.{ZookeeperTimeServiceDelegate, TimeServiceDelegate}
+import infrastructure.config.Config
+import infrastructure.guice.{PlayLifeCycleListener, ListenerCollector, PlayLifeCycleMatcher}
+import infrastructure.{Life, ServiceExporter}
+import org.apache.curator.framework.{CuratorFrameworkFactory, CuratorFramework}
 import org.apache.curator.retry.RetryNTimes
-import play.api.{Application, GlobalSettings, Logger}
+import play.api.{Configuration, Application, GlobalSettings, Logger}
 
 /**
  *
@@ -16,18 +18,28 @@ object Global extends GlobalSettings {
 
   val zookeeperUrl = configuration.getString("zookeeper.url").getOrElse("127.0.0.1:2181")
 
-  var curatorFramework: CuratorFramework = newCuratorClient
+  var curatorFramework: CuratorFramework = _
+
+  var listenerCollector: ListenerCollector[PlayLifeCycleListener] = _
 
   def newCuratorClient: CuratorFramework = {
     CuratorFrameworkFactory.newClient(zookeeperUrl, new RetryNTimes(20, 5000))
   }
 
-  val injector = Guice.createInjector(new AbstractModule {
-    protected def configure() {
-      bind(classOf[CuratorFramework]).toInstance(curatorFramework)
-      bind(classOf[TimeServiceDelegate]).to(classOf[ZookeeperTimeServiceDelegate])
-    }
-  })
+  var injector: Injector = _
+
+  def newInjector(listenerCollector: ListenerCollector[PlayLifeCycleListener], curatorFramework: CuratorFramework,
+                   configuration: Configuration) =
+    Guice.createInjector(new AbstractModule {
+      protected def configure() {
+        bindListener(PlayLifeCycleMatcher, listenerCollector)
+        bind(classOf[Configuration]).toInstance(configuration)
+        bind(classOf[Config]).asEagerSingleton()
+        bind(classOf[ServiceExporter]).asEagerSingleton()
+        bind(classOf[CuratorFramework]).toInstance(curatorFramework)
+        bind(classOf[TimeServiceDelegate]).to(classOf[ZookeeperTimeServiceDelegate])
+      }
+    })
 
   val info = ApiInfo(
     title = "Play Scala Microservice API",
@@ -39,19 +51,30 @@ object Global extends GlobalSettings {
 
   ConfigFactory.config.setApiInfo(info)
 
+
   var serviceExporter: ServiceExporter = _
+
+
+  override def beforeStart(app: Application): Unit = {
+    Logger.debug("Global.beforeStart")
+    curatorFramework = newCuratorClient
+    listenerCollector = new ListenerCollector[PlayLifeCycleListener]
+    injector = newInjector(listenerCollector, curatorFramework, app.configuration)
+  }
 
   override def onStart(app: Application): Unit = {
     Logger.debug("Global.onStart")
-    Logger.debug("Curator state: " + curatorFramework.getState)
-    curatorFramework = newCuratorClient
     curatorFramework.start()
-    serviceExporter = new ServiceExporter(curatorFramework, app.configuration)
+    //    Logger.debug("Curator state: " + curatorFramework.getState)
+    //    curatorFramework = newCuratorClient
+    //    curatorFramework.start()
+    //    serviceExporter = new ServiceExporter(curatorFramework, app.configuration)
+    listenerCollector.getListeners foreach (_.onStart())
   }
 
   override def onStop(app: Application): Unit = {
     Logger.debug("Global onStop")
-    serviceExporter.stop()
+    listenerCollector.getListeners foreach (_.onStop())
     curatorFramework.close()
   }
 
