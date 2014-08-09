@@ -1,10 +1,12 @@
+import analyzer.ActivityAnalyser
 import com.google.inject.{Injector, AbstractModule, Guice}
 import com.wordnik.swagger.config.ConfigFactory
 import com.wordnik.swagger.model.ApiInfo
 import delegate.{ZookeeperTimeServiceDelegate, TimeServiceDelegate}
+import extractor.TopicExtractor
 import infrastructure.config.Config
 import infrastructure.guice.{PlayLifeCycleListener, ListenerCollector, PlayLifeCycleMatcher}
-import infrastructure.{Life, ServiceExporter}
+import infrastructure.ServiceExporter
 import org.apache.curator.framework.{CuratorFrameworkFactory, CuratorFramework}
 import org.apache.curator.retry.RetryNTimes
 import play.api.{Configuration, Application, GlobalSettings, Logger}
@@ -29,7 +31,7 @@ object Global extends GlobalSettings {
   var injector: Injector = _
 
   def newInjector(listenerCollector: ListenerCollector[PlayLifeCycleListener], curatorFramework: CuratorFramework,
-                   configuration: Configuration) =
+                  configuration: Configuration) =
     Guice.createInjector(new AbstractModule {
       protected def configure() {
         bindListener(PlayLifeCycleMatcher, listenerCollector)
@@ -38,6 +40,7 @@ object Global extends GlobalSettings {
         bind(classOf[ServiceExporter]).asEagerSingleton()
         bind(classOf[CuratorFramework]).toInstance(curatorFramework)
         bind(classOf[TimeServiceDelegate]).to(classOf[ZookeeperTimeServiceDelegate])
+        bind(classOf[ActivityAnalyser]).to(classOf[TopicExtractor])
       }
     })
 

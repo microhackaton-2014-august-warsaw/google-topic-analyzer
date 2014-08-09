@@ -4,5 +4,7 @@ import api.{GoogleActivity, AnalysedActivity}
 import scala.util.Try
 
 trait ActivityAnalyser {
-  def analyze(posts : List[String]) : Try[List[String]]
+
+  def analyze(post : String) : List[String]
+
 }

@@ -11,8 +11,10 @@ GET         /api-docs             controllers.ApiHelpController.getResources
 
 # Ping service
 GET         /api-docs/ping        controllers.ApiHelpController.getResource(path = "/ping")
-POST        /ping                 @controllers.PingController.ping
+POST        /ping        @controllers.PingController.ping
 
 # Time service
-GET        /api-docs/time         controllers.ApiHelpController.getResource(path = "/time")
-GET        /time/now              @controllers.TimeController.now
+GET         /api-docs/time        controllers.ApiHelpController.getResource(path = "/time")
+GET         /time/now             @controllers.TimeController.now
+
+PUT         /api/:pairId          @controllers.ActivityController.receiveActivity(pairId)
